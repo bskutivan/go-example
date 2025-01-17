@@ -1,0 +1,299 @@
+{% comment %} 
+  Isolated section used for go collection grid
+{% endcomment %}
+
+{{ 'go-plp.css' | asset_url | stylesheet_tag }}
+{{ 'go-plp.js' | asset_url | script_tag }}
+
+{% liquid
+  assign go_row_1_products = collection.metafields.custom.go_row_1_products.value
+  assign go_row_2_products = collection.metafields.custom.go_row_2_products.value
+  assign go_row_3_products = collection.metafields.custom.go_row_3_products.value
+
+  assign go_row_1_featured_prod = collection.metafields.custom.go_featured_1.value
+  assign go_row_2_featured_prod = collection.metafields.custom.go_featured_2.value
+  assign go_row_3_featured_prod = collection.metafields.custom.go_featured_3.value
+
+  assign sizes = "360x360,540x540,720x720,1000x1000"
+
+  for go_row_1_product in go_row_1_products
+    if go_row_1_product == go_row_1_featured_prod
+      capture go_row_1_featured_prod_markup
+        render 'go-bundle-grid-item', product: go_row_1_featured_prod, featured: true, sizes: sizes, row: 1
+      endcapture
+    endif
+  endfor
+
+  capture go_row_1_prod_markup
+    for go_row_1_product in go_row_1_products
+      unless go_row_1_product == go_row_1_featured_prod
+          render 'go-bundle-grid-item', product: go_row_1_product, featured: false, sizes: sizes, row: 1
+      endunless
+    endfor
+  endcapture
+
+  for go_row_2_product in go_row_2_products
+    if go_row_2_product == go_row_2_featured_prod
+      capture go_row_2_featured_prod_markup
+        render 'go-bundle-grid-item', product: go_row_2_featured_prod, featured: true, sizes: sizes, row: 2
+      endcapture
+    endif
+  endfor
+
+  capture go_row_2_prod_markup
+    for go_row_2_product in go_row_2_products
+      unless go_row_2_product == go_row_2_featured_prod
+          render 'go-bundle-grid-item', product: go_row_2_product, featured: false, sizes: sizes, row: 2
+      endunless
+    endfor
+  endcapture
+
+  for go_row_3_product in go_row_3_products
+    if go_row_3_product == go_row_3_featured_prod
+      capture go_row_3_featured_prod_markup
+        render 'go-bundle-grid-item', product: go_row_3_featured_prod, sizes: sizes, featured: true, row: 3
+      endcapture
+    endif
+  endfor
+
+  capture go_row_3_prod_markup
+    for go_row_3_product in go_row_3_products
+      unless go_row_3_product == go_row_3_featured_prod
+          render 'go-bundle-grid-item', product: go_row_3_product, sizes: sizes, featured: false, row: 3
+      endunless
+    endfor
+  endcapture
+%}
+<div class="go-collection--breadcrumb-link">
+  <a href="{{ section.settings.breadcrumb-link }}"><span class='breadcrumb-arrow'>{% render 'icon-arrow-left' %}</span><span class="breadcrumb-copy">See All Sets</span></a>
+</div>
+<div data-section-id="{{ section.id }}" data-section-type="go-collection-grid--container" class="go-collection--grid-wrapper">
+
+<div  id="go-collection-grid--container--anchorlink"></div> 
+<div class="page-width">
+ 
+    <span id="discountValue" class="hidden" data-discount="{{ section.settings.discount_value }}"></span>
+    <div class="go-bundle-wrapper">
+      <div class="go-carousels-container">
+        {% if go_row_1_products != blank %}
+          <div class="go-carousel-wrapper">
+            <button title="left arrow" class="go-carousel-prev">{% render 'icon-arrow-left' %}</button>
+            <div id="go-row-1" class="go-carousel" data-row-id="1">
+              {{ go_row_1_featured_prod_markup }}{{ go_row_1_prod_markup }}
+            </div>
+            <button title="right arrow"class="go-carousel-next">{% render 'icon-arrow-right' %}</button>
+            {% render 'go-plp-qvm', row: 1 %}
+          </div>
+        {% endif %} 
+        {% if go_row_2_products != blank %}
+          <div class="go-carousel-wrapper">
+            <button title="left arrow" class="go-carousel-prev">{% render 'icon-arrow-left' %}</button>
+            <div id="go-row-2" class="go-carousel" data-row-id="2">
+              {{ go_row_2_featured_prod_markup }}{{ go_row_2_prod_markup }}
+            </div>
+            <button title="right arrow" class="go-carousel-next">{% render 'icon-arrow-right' %}</button>
+            {% render 'go-plp-qvm', row: 2 %}
+          </div>
+        {% endif %}
+        {% if go_row_3_products != blank %}
+          <div class="go-carousel-wrapper">
+            <button title="left arrow" class="go-carousel-prev">{% render 'icon-arrow-left' %}</button>
+            <div id="go-row-3" class="go-carousel" data-row-id="3">
+              {{ go_row_3_featured_prod_markup }}{{ go_row_3_prod_markup }}
+            </div>
+            <button title="right arrow" class="go-carousel-next">{% render 'icon-arrow-right' %}</button>
+            {% render 'go-plp-qvm', row: 3 %}
+          </div>
+        {% endif %}
+      </div>
+      <div class="faux-cart-container">
+        <div class="faux-cart">
+          <div class="faux-cart__header">
+            <div class="title">{{ collection.title }}</div>
+            <div class="price">
+              <div class="total-price-orig"></div>
+              <div class="total-price-discount"></div>
+            </div>
+          </div>
+          <div class="faux-cart__body">
+          <div class="product-card hidden">
+            <img class="product-image" src="https://placehold.co/50x62" alt="Product Name">
+            <div class="product-body">
+              <h3 class="product-title">Product Name</h3>
+              <p class="product-price"></p>
+              <span class="product-price-discount"></span>
+              <p class="product-details">
+                <strong>Color:</strong> <span class="product-color"></span>
+              </p>
+            </div>
+          </div>
+          <div class="product-card hidden">
+            <img class="product-image" src="https://placehold.co/50x62" alt="Product Name">
+            <div class="product-body">
+              <h3 class="product-title">Product Name</h3>
+              <p class="product-price"></p>
+              <span class="product-price-discount"></span>
+              <p class="product-details">
+                <strong>Color:</strong> <span class="product-color"></span>
+              </p>
+            </div>
+          </div>
+          <div class="product-card hidden">
+            <img class="product-image" src="https://placehold.co/50x62" alt="Product Name">
+            <div class="product-body">
+              <h3 class="product-title">Product Name</h3>
+              <p class="product-price"></p>
+              <span class="product-price-discount"></span>
+              <p class="product-details">
+                <strong>Color:</strong> <span class="product-color"></span>
+              </p>
+            </div>
+          </div>
+          </div>
+          <div class="faux-cart__total">
+            <div>
+              <span>Saving {{ section.settings.discount_value }}% with your bundle</span>
+              <h3>TOTAL</h3>
+            </div>
+            <div class="price">
+              <div class="total-price-orig"></div>
+              <div class="total-price-discount"></div>
+            </div>
+          </div>
+          <div class="faux-cart__submit">
+            <button title="submit" class="faux-cart__submit_button" 
+            data-gtm-atc-source="bundle-plp">
+            {% render 'icon-hobo-GO' %}
+            {% render 'icon-hobo-GO-right' %}
+            </button>
+          </div>
+        </div>
+        {% capture tab_one_content %}
+            {{ section.settings.tab_one_content }}
+        {% endcapture %}
+        {% unless tab_one_content == blank and section.settings.tab_one_header == blank %}
+            <div class="product-block product-block--tab">
+                {%- render 'tab', id: 1, title: section.settings.tab_one_header, content: tab_one_content -%}
+            </div>
+        {% endunless %}
+        {% capture tab_two_content %}
+            {{ section.settings.tab_two_content }}
+        {% endcapture %}
+        {% unless tab_two_content == blank and section.settings.tab_two_header == blank %}
+            <div class="product-block product-block--tab">
+                {%- render 'tab', id: 2, title: section.settings.tab_two_header, content: tab_two_content -%}
+            </div>
+        {% endunless %}
+      </div>
+      <div class="mobile-cart">
+        <div class="mobile-cart-wrapper">
+            <div class="mobile-cart__header">
+              <div class="mobile-cart__title">
+                <div class="title">{{ collection.title }}</div>
+                <div class="price">
+                  <div class="total-price-orig"></div>
+                  <div class="total-price-discount"></div>
+                </div>
+                <div class="savings">
+                  <span>Saving {{ section.settings.discount_value }}% with your bundle</span>
+                </div>
+              </div>
+              <button class="mobile-cart__close">
+                <svg width="14" height="2" viewBox="0 0 14 2" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 0H0V2H14V0Z" fill="white"/>
+                </svg>
+              </button>
+            </div>
+            <div class="mobile-cart__items">
+              <div class="mobile-cart__item hidden">
+                <img class="mobile-cart__image" src="https://placehold.co/40" alt="Product Name">
+                <div class="mobile-cart__name">Product Name</div>
+              </div>
+              <div class="mobile-cart__item hidden">
+                <img class="mobile-cart__image" src="https://placehold.co/40" alt="Product Name">
+                <div class="mobile-cart__name">Product Name</div>
+              </div>
+              <div class="mobile-cart__item hidden">
+                <img class="mobile-cart__image" src="https://placehold.co/40" alt="Product Name">
+                <div class="mobile-cart__name">Product Name</div>
+              </div>
+            </div>
+            <button class="mobile-cart__atb faux-cart__submit_button" data-gtm-atc-source="bundle-plp">Add To Bag<span id="styleCount"></span></button>
+        </div>
+      </div>
+    
+      <button class="mobile-go-button">
+        <div>
+          <div class="title">{{ collection.title }}</div>
+          <div class="price">
+              <div class="total-price-orig"></div>
+              <div class="total-price-discount"></div>
+            </div>
+        </div>
+        <div class="mobile-go-icons">
+          {% render 'icon-hobo-GO' %}
+          {% render 'icon-hobo-GO-right' %}
+        </div>
+      </button>
+    </div>
+  </div>
+</div>
+{% schema %}
+{
+  "name": "Go Collection Grid",
+  "class": "go-collection",
+  "settings": [
+    {
+      "type": "url",
+      "id": "breadcrumb-link",
+      "label": "Breadcrumb Link"
+    },
+    {
+      "type": "range",
+      "id": "discount_value",
+      "label": "Discount value (percentage) to update amounts in the faux cart",
+      "default": 10,
+      "min": 10,
+      "max": 30,
+      "step": 5,
+      "unit": "%"
+    },
+    {
+      "type": "header",
+      "content": "Tab 1 Settings"
+    },
+    {
+      "type": "text",
+      "id": "tab_one_header",
+      "label": "Tab header",
+      "default": "Description"
+    },
+    {
+      "type": "text",
+      "id": "tab_one_content",
+      "label": "Tab Content"
+    },
+    {
+      "type": "header",
+      "content": "Tab 2 Settings"
+    },
+    {
+      "type": "text",
+      "id": "tab_two_header",
+      "label": "Tab header",
+      "default": "Details"
+    },
+    {
+      "type": "text",
+      "id": "tab_two_content",
+      "label": "Tab Content"
+    }
+  ],
+    "presets": [
+      {
+      "name": "Go Collection Grid"
+    }
+  ]
+}
+{% endschema %}
+

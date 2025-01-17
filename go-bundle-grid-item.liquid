@@ -1,0 +1,368 @@
+{% comment %} 
+  Isolated snippet used for rendering go bundle items
+{% endcomment %}
+
+{% liquid 
+  assign siblings_product_list = product.metafields.custom.sibling_products.value.product_list.value
+
+  if siblings_product_list.count > 0
+    assign has_siblings = true
+  endif
+
+  assign on_sale = false
+  if product.compare_at_price > product.price
+    assign on_sale = true
+  endif
+
+  assign image_sizes = sizes | split: ","
+%}
+<div class="go-bundle-grid-item grid__item grid-product w-swatches" 
+{% if featured == true %}data-featured="true"{% endif %} 
+  data-product-handle="{{ product.handle }}" 
+  data-product-id="{{ product.selected_or_first_available_variant.id }}"  
+  data-product-color="{{ product.selected_or_first_available_variant.title }}" 
+  data-product-handle="{{ product.handle }}"
+  data-product-id="{{ product.id }}" 
+  data-product-title="{{ product.metafields.global.product_name }}" 
+  data-product-image="{{ product | image_url: width: 50 }}"
+  data-product-price="  {%- if on_sale -%} {{ product.compare_at_price | money }} {% else  %} {{ product.price  | money }} {% endif %}"
+  data-product-sale-price="{%- if on_sale -%} {{ product.price  | money }} {% else  %} 0 {% endif %}"
+  data-product-features='{{ product_features }}'>
+  
+  <div class="grid-product__content">
+
+    {%- liquid
+      assign fixed_aspect_ratio = false
+      unless settings.product_grid_image_size == 'natural'
+        assign fixed_aspect_ratio = true
+      endunless
+
+      assign preview_image = product.featured_media.preview_image
+      assign img_url = preview_image | img_url: '1x1' | replace: '_1x1.', '_{width}x.'
+    -%}
+    <div aria-label="Quick View Button" class="quick-product__btn">
+
+      <span class="go-quick-icon">{% render 'icon-magnifying' %}</span>
+      <span class="quick-product__label">More Details</span>
+      {% for image in product.images limit: 4 %}
+        {%- capture quickview_srcset -%}
+            {%- for size in image_sizes -%}
+              {%- liquid
+                assign small_size = '20x'
+                assign size_array = size | split: "x"
+                assign size_width = size_array[0]
+                if size_array[0] != "0"
+                  assign size_x = size_array[0] | append: 'x'
+                else
+                  assign size_width = image.width | times: size_array[1] | divided_by: image.height | floor
+                endif
+                if size_array[1] != "0"
+                  assign size_x = size
+                  assign small_x = size_array[1] | times: 20 | divided_by: size_array[0] | floor
+                  assign small_size = small_size | append: small_x
+                endif
+              -%}
+              {{- image.src | img_url: size_x, crop: 'center' }} {{ size_width }}w,
+            {%- endfor -%}
+          {%- endcapture -%}
+        <span style="display: none" class='go-quick-image image-{{ forloop.index }}' data-src="{{ quickview_srcset }}" data-aspectratio="{{ image.aspect_ratio }}" alt="{{ image.alt | escape }}"></span>
+      {% endfor %}
+    </div>     
+    <a href="{{ product.url | within: collection }}" class="grid-product__link">
+    {% unless template.name contains 'product' or template.suffix contains "go-hobo" %}  
+      <div class="style-column-label__container">
+        <div class="style-column-label">
+          <span class="style-column-label__copy">Style {{ row }}</span>
+        </div>
+      </div>
+    {% endunless %}
+      <div class="grid-product__image-mask">
+        
+        {%- if fixed_aspect_ratio -%}
+          <div
+            class="grid__image-ratio grid__image-ratio--{{ settings.product_grid_image_size }}">
+            <img class="lazyload{% unless settings.product_grid_image_fill %} grid__image-contain{% endunless %}"
+              data-src="{{ img_url }}"
+              data-widths="[360, 540, 720, 900, 1080]"
+              data-aspectratio="{{ preview_image.aspect_ratio }}"
+              data-sizes="auto"
+              alt="{{ preview_image.alt | escape }}">
+          </div>
+        {%- else -%}
+          <div class="image-wrap"
+            style="height: 0; padding-bottom: {{ 100 | divided_by: preview_image.aspect_ratio }}%;"
+            >
+            <img class="grid-product__image lazyload"
+                data-src="{{ img_url }}"
+                data-widths="[360, 540, 720, 900, 1080]"
+                data-aspectratio="{{ preview_image.aspect_ratio }}"
+                data-sizes="auto"
+                alt="{{ preview_image.alt | escape }}">
+            <noscript>
+              <img class="grid-product__image lazyloaded"
+                src="{{ preview_image | img_url: '400x' }}"
+                alt="{{ preview_image.alt | escape }}">
+            </noscript>
+          </div>
+        {%- endif -%}
+
+        {%- if settings.product_hover_image and product.media.size > 1 -%}
+          {%- for media in product.media offset: 1 limit: 1 -%}
+            {%- assign second_image = media.preview_image -%}
+          {%- endfor -%}
+          <div class="grid-product__secondary-image small--hide">
+            {%- assign img_url = second_image | img_url: '1x1' | replace: '_1x1.', '_{width}x.' -%}
+            <img class="lazyload"
+                data-src="{{ img_url }}"
+                data-widths="[360, 540, 720, 1000]"
+                data-aspectratio="{{ second_image.aspect_ratio }}"
+                data-sizes="auto"
+                alt="{{ second_image.alt }}">
+          </div>
+        {%- endif -%}
+      </div>
+    </a>
+    <div class="grid-product__info-container">
+      <div>
+        <a href="{{ product.url | within: collection }}" class="title-container">
+          <div class="title-wrapper">
+            <span class="title" aria-label="{{ product.title }}">{{ product.metafields.global.product_name }}</span>
+            <span style="display: none" class="description">{{ product.description }}</span>
+          </div>
+        </a>
+        <div class="grid-product__price {% if isAddOnsBlock or on_sale %}line-through{% endif %}">
+          {%- if on_sale -%}
+            <span class="visually-hidden">{{ 'products.general.regular_price' | t }}</span>
+            <span class="grid-product__price--original">{{ product.compare_at_price | money }}</span>
+            <span class="visually-hidden">{{ 'products.general.sale_price' | t }}</span>
+          {%- endif -%}
+        {%- if product.price_varies -%}
+            {%- assign price = product.price_min | money -%}
+            {{ 'products.general.from_text_html' | t: price: price }}
+          {%- else -%}
+          <span class="go-price-regular">
+            {{ product.price  | money }}
+          </span>
+          {%- endif -%}
+          {% if isAddOnsBlock %}
+            <span class="grid-product__price--savings">
+              {% assign discountGoPercent = settings.go_discount_value %}
+              {% assign discountGoCalc =  product.price | times: discountGoPercent | divided_by: 100 | round %}
+              {{ product.price | minus: discountGoCalc | round | money }}
+            </span>
+          {%  else  %}
+            {%- if on_sale -%}
+              {%- if settings.product_save_amount -%}
+                {%- if settings.product_save_type == 'dollar' -%}
+                  {%- capture saved_amount -%}{{ product.compare_at_price | minus: product.price | money }}{%- endcapture -%}
+                {%- else -%}
+                  {%- capture saved_amount -%}{{ product.compare_at_price | minus: product.price | times: 100.0 | divided_by: product.compare_at_price | round }}%{%- endcapture -%}
+                {%- endif -%}
+                <span class="grid-product__price--savings">
+                  {{ 'products.general.save_html' | t: saved_amount: saved_amount }}
+                </span>
+              {%- endif -%}
+            {%- endif -%}
+        {% endif %}
+        </div>
+      </div>
+      {% if has_siblings %}
+        {% for option in product.options_with_values %}
+          {% assign option_name = option.name | downcase | escape %}
+          {% if option_name contains 'color' or option_name contains 'colour' or option_name contains 'couleur' or option_name contains 'farbe' %}
+            {% assign current_values = option.values  %}
+                    {% for value in current_values %}
+                      {% assign current_value = value %}
+                    {% endfor %}
+          {% endif %}
+        {% endfor %}
+        <div class="swatches-container">
+          <div class="swatches-label-wrapper">
+            <span class="label">Color | </span>
+            <span id="go-grid-current-swatch-label" class="label current_color" aria-label="{{ current_value }}">{{ current_value | replace: "-", " " }}</span>
+          </div>
+          <div class="swatches-wrapper">
+            {% comment %} 
+              Loop through array of sibling products.
+              Create swatch for each.
+              Reference variant color for color.
+              Add onClick js reference for handling click of swatch.
+            {% endcomment %}
+            {% for sib_product in siblings_product_list %}
+              {%- capture sib_srcset_main -%}
+                {%- for size in image_sizes -%}
+                  {%- liquid
+                    assign small_size = '20x'
+                    assign size_array = size | split: "x"
+                    assign size_width = size_array[0]
+
+                    assign size_x = size
+                    if size_array[0] != "0"
+                      assign size_x = size_array[0] | append: 'x'
+                    else
+                      assign size_width = image.width | times: size_array[1] | divided_by: image.height | floor
+                    endif
+                    if size_array[1] != "0"
+                      assign size_x = size
+                      assign small_x = size_array[1] | times: 20 | divided_by: size_array[0] | floor
+                      assign small_size = small_size | append: small_x
+                    endif
+                  -%}
+                  {{- sib_product.featured_media.src | img_url: size_x, crop: 'center' }} {{ size_width }}w,
+                {%- endfor -%}
+              {%- endcapture -%} 
+
+              {%- capture sib_srcset_hover -%}
+                {%- for size in image_sizes -%}
+                  {%- liquid
+                    assign small_size = '20x'
+                    assign size_array = size | split: "x"
+                    assign size_width = size_array[0]
+                    assign size_x = size
+                    if size_array[0] != "0"
+                      assign size_x = size_array[0] | append: 'x'
+                    else
+                      assign size_width = image.width | times: size_array[1] | divided_by: image.height | floor
+                    endif
+                    if size_array[1] != "0"
+                      assign size_x = size
+                      assign small_x = size_array[1] | times: 20 | divided_by: size_array[0] | floor
+                      assign small_size = small_size | append: small_x
+                    endif
+                  -%}
+                  {{- sib_product.images[1].src | img_url: size_x, crop: 'center' }} {{ size_width }}w,
+                {%- endfor -%}
+              {%- endcapture -%}
+
+              {%- capture sib_srcset_third -%}
+                {%- for size in image_sizes -%}
+                  {%- liquid
+                    assign small_size = '20x'
+                    assign size_array = size | split: "x"
+                    assign size_width = size_array[0]
+                    assign size_x = size
+                    if size_array[0] != "0"
+                      assign size_x = size_array[0] | append: 'x'
+                    else
+                      assign size_width = image.width | times: size_array[1] | divided_by: image.height | floor
+                    endif
+                    if size_array[1] != "0"
+                      assign size_x = size
+                      assign small_x = size_array[1] | times: 20 | divided_by: size_array[0] | floor
+                      assign small_size = small_size | append: small_x
+                    endif
+                  -%}
+                  {{- sib_product.images[3].src | img_url: size_x, crop: 'center' }} {{ size_width }}w,
+                {%- endfor -%}
+              {%- endcapture -%}
+
+              {%- capture sib_srcset_fourth -%}
+                {%- for size in image_sizes -%}
+                  {%- liquid
+                    assign small_size = '20x'
+                    assign size_array = size | split: "x"
+                    assign size_width = size_array[0]
+                    assign size_x = size
+                    if size_array[0] != "0"
+                      assign size_x = size_array[0] | append: 'x'
+                    else
+                      assign size_width = image.width | times: size_array[1] | divided_by: image.height | floor
+                    endif
+                    if size_array[1] != "0"
+                      assign size_x = size
+                      assign small_x = size_array[1] | times: 20 | divided_by: size_array[0] | floor
+                      assign small_size = small_size | append: small_x
+                    endif
+                  -%}
+                  {{- sib_product.images[4].src | img_url: size_x, crop: 'center' }} {{ size_width }}w,
+                {%- endfor -%}
+              {%- endcapture -%}
+              {% liquid    
+                for option in sib_product.options_with_values
+                  assign option_name = option.name | downcase | escape 
+                  if option_name contains 'color' or option_name contains 'colour' or option_name contains 'couleur' or option_name contains 'farbe' or option_name contains 'Color'
+                    assign color_values = option.values 
+                    for value in color_values
+                      assign color_value = value
+                    endfor
+                  endif
+                endfor
+              
+                assign swatch_file_extension = 'png'
+                assign color_file_name = color_value | handle | replace: "-", "_" | append: '.' | append: swatch_file_extension
+                assign color_image = color_file_name | file_img_url: '50x50' | prepend: 'https:' | split: '?' | first
+                assign color_swatch_fallback = color_value | split: ' ' | last | handle
+              %}
+
+              {% liquid  
+              assign swatch_on_sale = false
+              if sib_product.compare_at_price > sib_product.price
+                assign swatch_on_sale = true
+              endif %}
+
+              {% assign discountGoCalc =  sib_product.price | times: discountGoPercent | divided_by: 100 | round %}
+
+              <span class="color-swatch-container" 
+                data-product-id="{{ sib_product.selected_or_first_available_variant.id }}"  
+                data-product-handle="{{ sib_product.handle }}" 
+                data-product-title='{{ sib_product.metafields.global.product_name }}' 
+                data-product-image="{{ sib_product.featured_media.src | img_url: '50x' }}"
+                data-product-color-prefix="{{ sib_product.metafields.global.leather_type }}"
+                data-inventory="{{ sib_product.selected_or_first_available_variant.inventory_quantity }}"
+                {% if isAddOnsBlock %}
+                data-addon-block='true'
+                data-product-price="{% if swatch_on_sale %}{{ sib_product.compare_at_price | money }}{% else %}{{ sib_product.price | money }}{% endif %}"
+                data-product-sale-price="{{ sib_product.price | minus: discountGoCalc | round | money }}"
+                {% else %}
+                data-product-price="{% if swatch_on_sale %}{{ sib_product.compare_at_price | money }}{% else %}{{ sib_product.price | money }}{% endif %}"
+                data-product-sale-price="{% if swatch_on_sale %}{{ sib_product.price | money }}{% else %}0{% endif %}"
+                {% endif %}
+                data-color="{{ color_value }}" 
+                data-product-url="{{ sib_product.url | within: collection }}" 
+                data-srcset="{{ sib_srcset_main }}" 
+                data-hoversrcset="{{ sib_srcset_hover }}" 
+                data-thirdsrcset="{{ sib_srcset_third }}" 
+                data-fourthsrcset="{{ sib_srcset_fourth }}"
+                data-fauxcartsrcset='{{ sib_product | image_url: width: 50 }}'>
+                <span 
+                style="background-color: {{ color_swatch_fallback }};{% if images[color_file_name] != blank %}  background-image: url({{ color_image }});{% endif %}" 
+                class="color-swatch {% if current_value == color_value %} active-swatch {% endif %}">
+                </span>
+                <span class="color-swatch-color-name">{{ color_value }} </span>
+              
+                </span>
+            {% endfor %}
+
+            <span class="sib-features quickview-only">
+              {% render 'go-features', product: product, isGridItem: true %}
+            </span>
+          </div>
+        </div>
+      {% endif %}
+      {% if showATC == true or section.settings.show_atc_grid_items%}
+
+        {% comment %} First, get cart items to check if this item already exists in cart 
+        If so, get quantity in cart and subtract from variant quantity and adjust ATC text accordingly  {% endcomment %}
+          
+        {% assign quantity_in_cart = 0 %}
+        {% for item in cart.items %}
+          {% if item.variant_id == product.selected_or_first_available_variant.id %}
+            {% assign quantity_in_cart = item.quantity %}
+          {% endif %}
+        {% endfor %}
+        {% assign totalAvailable = product.selected_or_first_available_variant.inventory_quantity | minus: quantity_in_cart %}
+
+          <button class="go-bundle-grid-item-atc--btn" 
+        
+            {% if isPairsWell %}
+              data-gtm-atc-source="pdp-upsell"
+            {% elsif isShopTheLook %}
+              data-gtm-atc-source="pdp-shop-the-look"
+            {% endif %}
+              type="submit" aria-label="add to cart button" {% if totalAvailable <= 0 %}disabled{% endif %}>
+            <span class="go-bundle-grid-item-atc--text"> {% if totalAvailable <= 0 %}Sold Out{% else %}Add To Cart {% endif %}</span>
+          </button>
+      {% endif %}
+    </div>
+  </div>
+</div>
